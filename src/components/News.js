@@ -1,9 +1,10 @@
 import React, { Component } from 'react'
 import NewsItem from './NewsItem'
-import Spinner from './Spinner';
+import Spinner from './Spinner'
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 export default class News extends Component {
-    totalResults = 38;
+
      articles= [
         {
             "source": {
@@ -273,12 +274,12 @@ export default class News extends Component {
             articles: this.articles,
             loading: false,
             page: 1,
-            totalResults : this.totalResults 
+            totalResults : 0
         }
     }
     async componentDidMount()
     {
-        let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=16c70c5c426540f0876e8f52d1e4fb19&page=1&pageSize=${this.props.pageSize}`
+        let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=${this.props.apiKey}&page=1&pageSize=${this.props.pageSize}`
         this.setState({loading : true})
          fetch(url).then((response) => response.json())
         .then((data) => {
@@ -289,52 +290,75 @@ export default class News extends Component {
             });
         });
     }
-    handleNextClick = async () => {
-        let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=16c70c5c426540f0876e8f52d1e4fb19&page=${this.state.page + 1}&pageSize=${this.props.pageSize}`
-        this.setState({loading : true})
-            fetch(url).then((response) => response.json())
-                .then((data) => {
-                    this.setState({
-                        articles: data.articles,
-                        page: this.state.page + 1,
-                        loading : false
+    // handleNextClick = async () => {
+    //     let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=${this.props.apiKey}&page=${this.state.page + 1}&pageSize=${this.props.pageSize}`
+    //     this.setState({loading : true})
+    //         fetch(url).then((response) => response.json())
+    //             .then((data) => {
+    //                 this.setState({
+    //                     articles: data.articles,
+    //                     page: this.state.page + 1,
+    //                     loading : false
 
-                    });
-                });
-            return false;
-        }
+    //                 });
+    //             });
+    //         return false;
+    //     }
 
-    handlePrevClick = async () => {
-        let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=16c70c5c426540f0876e8f52d1e4fb19&page=${this.state.page - 1}&pageSize=${this.props.pageSize}`
+    // handlePrevClick = async () => {
+    //     let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=${this.props.apiKey}&page=${this.state.page - 1}&pageSize=${this.props.pageSize}`
+    //     this.setState({loading : true})
+    //      fetch(url).then((response) => response.json())
+    //     .then((data) => {
+    //         this.setState({
+    //             articles: data.articles,
+    //             page: this.state.page - 1,
+    //             loading : false
+    //         });
+    //     });
+    
+    // }
+    fetchMoreData = () => {
+        this.props.setProgress(0)
+         let url = `https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&page=${this.state.page + 1}&apiKey=${this.props.apiKey}&page=1&pageSize=${this.props.pageSize}`
         this.setState({loading : true})
          fetch(url).then((response) => response.json())
         .then((data) => {
             this.setState({
-                articles: data.articles,
-                page: this.state.page - 1,
-                loading : false
+                articles: this.state.articles.concat(data.articles),
+                totalResults: this.state.totalResults,
+                loading: false,
+                page : this.state.page + 1
             });
         });
-    
-    }
+        this.props.setProgress(100)
+  };
   render() {
     return (
         <div>
             <div className="container my-3">
                 <h2 class="text-center">NewsMonkey Breaking news</h2>
-                {this.state.loading && <Spinner />}
+                 {this.state.loading && <Spinner />}
+                 <InfiniteScroll
+          dataLength={this.state.articles.length}
+          next={this.fetchMoreData}
+          hasMore={this.state.articles.length !== this.state.totalResults }
+           loader={this.state.loading && <Spinner />}
+            endMessage={
+            <p style={{ textAlign: 'center' }}>
+            <b>Yay! You have seen it all</b>
+            </p>
+  }
+        >
                 <div className="row">
-                    {!this.state.loading && this.state.articles.map((element) => {
+                    {this.state.articles.map((element) => {
                         return <div className="col-md-4" key="element.url">
                             <NewsItem title={element.title?element.title:""} description={element.description?element.description:""} imageUrl={element.urlToImage?element.urlToImage:"https://images.cointelegraph.com/images/1200_aHR0cHM6Ly9zMy5jb2ludGVsZWdyYXBoLmNvbS91cGxvYWRzLzIwMjMtMDkvMjIxOTc3MGMtMTAzOC00NTBhLTk0ZmMtYTkzNWZjMzZhZmU1LmpwZw==.jpg"} url={element.url} />
                         </div>
                      })}
                 
-                </div>
-                <div className = "container d-flex justify-content-between">
-                    <button disabled={this.state.page<=1}type="button" class="btn btn-dark" onClick={this.handlePrevClick}>Previous</button>
-                    <button disabled={(this.state.page+1) > Math.ceil(this.state.totalResults/this.props.pageSize)}type="button" class="btn btn-dark" onClick={this.handleNextClick}>Next</button>
-                </div>
+                    </div>
+                    </InfiniteScroll>
             </div>
       </div>
     )
