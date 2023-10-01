@@ -36,7 +36,13 @@ export default class Navbar extends Component {
                             </li>
         <li className="nav-item">
          <Link className="nav-link" to="/Technology">Technology</Link>
-        </li>                    
+                </li>  
+        <li className="nav-item">
+         <Link className="nav-link" to="/World">World</Link>
+                </li>  
+        <li className="nav-item">
+         <Link className="nav-link" to="/Nation">Nation</Link>
+        </li>          
       </ul>
     </div>
   </div>
